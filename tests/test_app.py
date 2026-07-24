@@ -2,7 +2,7 @@ from app import app, db, WeatherLog, Favorite, get_activity_recommendation
 from unittest.mock import patch
 
 # Testing the valid zip code fetches mock API data and successfully saves the location to the database.
-@patch('src.app.requests.get')
+@patch('app.requests.get')
 def test_weather_search(mock_get, client):
     fake_json_data = {"location": {
         "name": "Jersey City"
@@ -22,7 +22,7 @@ def test_weather_search(mock_get, client):
         assert log_entry.location_name == "Jersey City"
 
 # Testing if there is a bad zip code inserted.
-@patch('src.app.requests.get')
+@patch('app.requests.get')
 def test_bad_zipcode(mock_get, client):
     fake_error_json = {
         "error": {
