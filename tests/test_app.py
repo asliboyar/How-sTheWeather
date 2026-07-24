@@ -1,4 +1,4 @@
-from src.app import app, db, WeatherLog, Favorite, get_activity_recommendation
+from app import app, db, WeatherLog, Favorite, get_activity_recommendation
 from unittest.mock import patch
 
 # Testing the valid zip code fetches mock API data and successfully saves the location to the database.

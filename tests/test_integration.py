@@ -1,4 +1,4 @@
-from src.app import app, db, Favorite
+from app import app, db, Favorite
 
 # Testing integration of Home page with its HTML file
 def test_homepage_integration(client):
