@@ -1,0 +1,1 @@
+How's The Weather is a Flask-based web application that fetches real-time weather data and recommends activities based on current conditions.
