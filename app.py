@@ -5,8 +5,10 @@ import json
 from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
+import logging
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
 load_dotenv()
 api_key = os.environ.get("WEATHER_API_KEY")
 
@@ -97,11 +99,13 @@ def get_activity_recommendation(temp, condition_text):
 
 @app.route("/")
 def main():
+    app.logger.info("Main homepage loaded by a user.")
     return render_template("index.html")
 
 @app.route("/get_weather", methods=["POST"])
 def get_weather():
     zipcode = request.form.get("zipcode")
+    app.logger.info(f"Weather requested for location: {zipcode}")
     # Fetching data from an external source such as a REST API.
     WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
     url = f"http://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={zipcode}&days=1"
