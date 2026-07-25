@@ -1,4 +1,4 @@
-from app import app, db, WeatherLog, Favorite, get_activity_recommendation
+from app import app, db, WeatherLog, Favorite, get_activity_recommendation, health_check
 from unittest.mock import patch
 
 # Testing the valid zip code fetches mock API data and successfully saves the location to the database.
@@ -44,3 +44,8 @@ def test_activity_logic2():
     options = get_activity_recommendation(65.0, "Sunny")
     assert "A fantastic day to travel around." in options
     assert "Don't forget your groceries" in options
+
+def test_health_check(client):
+    response = client.get('/health_check')
+    assert response.status_code == 200
+    assert response.json == {"status": "healthy"}

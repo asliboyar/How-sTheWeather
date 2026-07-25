@@ -1,5 +1,4 @@
-from flask import Flask, request
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import requests
 import random
 import json
@@ -171,3 +170,8 @@ def remove_favorite():
 def get_count(activity):
     count = Favorite.query.filter_by(activity_text=activity).count()
     return {"count": count}
+
+
+@app.route("/health_check", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
