@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 from dotenv import load_dotenv
 import logging
+import pika
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -105,6 +106,14 @@ def main():
 @app.route("/get_weather", methods=["POST"])
 def get_weather():
     zipcode = request.form.get("zipcode")
+
+    conn = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+    channel = conn.channel()
+    channel.queue_declare(queue="weather_logs", durable=True)
+    channel.basic_publish(exchange="", routing_key="weather_logs",
+                          body=f"User searched for zip code: {zipcode}")                       
+    conn.close()
+    
     app.logger.info(f"Weather requested for location: {zipcode}")
     # Fetching data from an external source such as a REST API.
     WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
