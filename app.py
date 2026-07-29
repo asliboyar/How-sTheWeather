@@ -107,12 +107,18 @@ def main():
 def get_weather():
     zipcode = request.form.get("zipcode")
 
-    conn = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
-    channel = conn.channel()
-    channel.queue_declare(queue="weather_logs", durable=True)
-    channel.basic_publish(exchange="", routing_key="weather_logs",
-                          body=f"User searched for zip code: {zipcode}")                       
-    conn.close()
+    try:
+        conn = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
+        channel = conn.channel()
+        channel.queue_declare(queue="weather_logs", durable=True)
+        
+        channel.basic_publish(exchange="", 
+                              routing_key="weather_logs", 
+                              body=f"User searched for zip code: {zipcode}")
+        conn.close()
+    except Exception as e:
+        # If RabbitMQ is down (like on GitHub's test server)
+        print(f"Could not connect to RabbitMQ: {e}")
     
     app.logger.info(f"Weather requested for location: {zipcode}")
     # Fetching data from an external source such as a REST API.
