@@ -1,4 +1,5 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, session
+import uuid
 import requests
 import random
 import json
@@ -9,6 +10,7 @@ import logging
 import pika
 
 app = Flask(__name__)
+app.secret_key = "super-secret-key-change-this-in-prod"
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 api_key = os.environ.get("WEATHER_API_KEY")
@@ -19,6 +21,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 class Favorite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.String(100), nullable=False)
     activity_text = db.Column(db.String(250), nullable=False)
 
 class WeatherLog(db.Model):
@@ -159,36 +162,43 @@ def get_weather():
         options_list=json.dumps(options_list)
     )
 
+def get_user_session_id():
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid.uuid4())
+    return session['user_id']
 
 @app.route("/save_favorite", methods=["POST"])
 def save_favorite():
     data = request.json
     liked_activity = data.get("activity")
-    new_favorite = Favorite(activity_text=liked_activity)
-    #Storing the data in a database.
-    db.session.add(new_favorite)
-    db.session.commit()
-    print(f"SAVED TO DATABASE: {liked_activity}")
-    
+    user_id = get_user_session_id()
+    existing = Favorite.query.filter_by(session_id=user_id, activity_text=liked_activity).first()
+    if not existing:
+        new_favorite = Favorite(session_id=user_id, activity_text=liked_activity)
+        #Storing the data in a database.
+        db.session.add(new_favorite)
+        db.session.commit()
+        print(f"SAVED TO DATABASE for user {user_id}: {liked_activity}")
     return {"status": "success"}
 
 @app.route("/remove_favorite", methods=["POST"])
 def remove_favorite():
     data = request.json
     activity_to_remove = data.get("activity")
-    
-    favorite = Favorite.query.filter_by(activity_text=activity_to_remove).first()
-    if favorite:
-        db.session.delete(favorite)
-        db.session.commit()
-        print(f"REMOVED FROM DATABASE: {activity_to_remove}")
+    user_id = get_user_session_id()
+    favorites = Favorite.query.filter_by(session_id=user_id, activity_text=activity_to_remove).all()
+    for fav in favorites:
+        db.session.delete(fav)
+    db.session.commit()
+    print(f"REMOVED FROM DATABASE for user {user_id}: {activity_to_remove}")
         
     return {"status": "success"}
 
 @app.route("/get_count/<path:activity>")
 def get_count(activity):
-    count = Favorite.query.filter_by(activity_text=activity).count()
-    return {"count": count}
+    user_id = get_user_session_id()
+    is_favorited = Favorite.query.filter_by(session_id=user_id, activity_text=activity).count()
+    return {"count": is_favorited}
 
 
 @app.route("/health_check", methods=["GET"])
